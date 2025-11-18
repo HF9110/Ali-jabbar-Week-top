@@ -14,10 +14,10 @@ import { 
 // ===> NOTE: Security Risk Addressed: Using environment variables placeholders.
 // =========================================================================
 
-// استخدام متغيرات البيئة بدلاً من إدراج المفتاح مباشرة في الكود
-const VITE_FIREBASE_API_KEY = typeof process.env.VITE_FIREBASE_API_KEY !== 'undefined' 
-    ? process.env.VITE_FIREBASE_API_KEY 
-    : "AIzaSyDUxC_2orwmSLL9iEBIkeohZKfH36MjZ4Y"; // القيمة الافتراضية القديمة (لتشغيل التطبيق)
+// استخدام متغيرات البيئة بدلاً من إدراج المفتاح مباشرة في الكود (يفترض استخدام REACT_APP_PREFIX في CRA)
+const VITE_FIREBASE_API_KEY = typeof process.env.REACT_APP_FIREBASE_API_KEY !== 'undefined' 
+    ? process.env.REACT_APP_FIREBASE_API_KEY 
+    : "AIzaSyDUxC_2orwmSLL9iEBIkeohZKfH36MjZ4Y"; // القيمة الافتراضية القديمة (للتشغيل المبدئي)
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'ali-jabbar-week';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -45,7 +45,6 @@ if (Object.keys(firebaseConfig).length && firebaseConfig.apiKey !== "YOUR_API_KE
         console.error("Firebase Initialization Failed:", e);
     }
 } else {
-    // هذا سيحدث إذا لم يكن مفتاح API صحيحاً أو موجوداً
     console.error("Firebase configuration not found or API Key is missing. Running in mock mode.");
 }
 
@@ -815,7 +814,6 @@ const Home = ({ settings, allSubmissions, totalApproved, onVote, cooldown }) => 
 
     const renderContent = () => {
         if (isSubmissionStage) {
-            // If running in non-Firebase environment, userId will be 'mock-user-id'
             return <SubmissionForm settings={settings} userId={null} />; 
         }
 
@@ -1050,7 +1048,7 @@ const AdminSubmissionsPanel = ({ submissions, settings, isGlassmorphism, onUpdat
 
                     <div className="flex justify-end pt-4">
                          <button 
-                            onClick={() => onSave(editData)} 
+                            onClick={() => handleSaveEdit(editData)} 
                             className="py-2 px-6 rounded-lg text-gray-900 font-semibold transition"
                             style={{ backgroundColor: settings.mainColor }}
                         >
@@ -1103,7 +1101,6 @@ const AdminSubmissionsPanel = ({ submissions, settings, isGlassmorphism, onUpdat
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 submission={submissionToEdit}
-                onSave={handleSaveEdit}
                 settings={settings}
             />
         </GlassCard>
@@ -1388,11 +1385,10 @@ const App = () => {
     const initDataRef = useRef(false);
 
     useEffect(() => {
-        if (!isAuthReady || initDataRef.current) return;
+        if (!db || !isAuthReady || initDataRef.current) return;
         initDataRef.current = true;
         
         const initializeFirestore = async () => {
-            if (!db) return;
             try {
                 const settingsDocRef = doc(db, PUBLIC_SETTINGS_PATH);
                 const settingsSnap = await retryOperation(() => getDoc(settingsDocRef));
@@ -1425,8 +1421,6 @@ const App = () => {
 
     useEffect(() => {
         if (!db || !isAuthReady) {
-            // Handle mock mode or unready state gracefully if needed, 
-            // but since we call initializeFirestore, we rely on the logic inside initDataRef useEffect.
             return;
         }
 
@@ -1558,7 +1552,6 @@ const App = () => {
                         onSaveSettings={handleSaveSettings}
                         onUpdateSubmissionStatus={handleUpdateSubmissionStatus}
                         onLogout={handleAdminLogout}
-                        // setSettings={(setter) => setSettings(setter)} // Removed unused prop
                     />
                 ) : (
                     <Home 
@@ -1574,7 +1567,7 @@ const App = () => {
             <Footer settings={settings} />
             
             <AdminAuthModal 
-                isOpen={authModalOpen && !adminMode} // Only open if not already authenticated
+                isOpen={authModalOpen && !adminMode} 
                 onClose={() => setAuthModalOpen(false)}
                 onAuthSuccess={handleAdminLoginSuccess}
             />
