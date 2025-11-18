@@ -1,0 +1,14 @@
+{
+    "startCommand": "npm start",
+    "installDependencies": true,
+    "webContainer": {
+      "autoInstall": true,
+      "idleTimeout": 1200000,
+      "shell": "jsh",
+      "waitReady": 5000,
+      "excludeFiles": [
+        ".git",
+        ".stackblitzrc"
+      ]
+    }
+  }
